@@ -28,11 +28,14 @@ funcion_conteo = function(df, ...){
   return(df2)
 }
 
-# Función para crear el histograma del punto 3 
+# Función para crear el histograma del punto 3 y del punto 7
 histograma = function(df, titulo, lottery_mean, x_lab, bin_width, x_var, fill_var){
   grafica = df %>% 
-    ggplot(aes(x = {{x_var}}, fill = {{fill_var}})) +
-    geom_histogram(binwidth = bin_width, color = "black") + 
+    ggplot(aes(x = {{x_var}})) +
+    geom_histogram(aes(fill = {{fill_var}}), binwidth = bin_width, color = "black") +
+    geom_text(aes(label = scales::percent(..prop..)), 
+              position = position_dodge(width = 1), 
+              stat = "count", vjust = -0.8, check_overlap = TRUE) +
     geom_vline(xintercept = lottery_mean, color = "black") +
     theme_light() +
     ggtitle(titulo) + 
@@ -46,19 +49,10 @@ histograma2 = function(df, titulo, lottery_mean, x_lab, bin_width, x_var, color_
   grafica = df %>% 
     ggplot(aes(x = {{x_var}})) +
     geom_histogram(binwidth = bin_width, color = "black", fill = color_llenado) + 
+    geom_text(aes(label = scales::percent(..prop..)), 
+              position = position_dodge(width = 1), 
+              stat = "count", vjust = -0.8, check_overlap = TRUE) +
     geom_vline(xintercept = lottery_mean, color = "black") +
-    theme_light() +
-    ggtitle(titulo) + 
-    ylab("Número de individuos") +
-    xlab(x_lab)
-  return(grafica)
-}
-
-# Función para crear el histograma del punto 7
-histograma3 = function(df, titulo, x_lab, bin_width, x_var, color_llenado){
-  grafica = df %>% 
-    ggplot(aes(x = {{x_var}})) +
-    geom_histogram(binwidth = bin_width, color = "black", fill = color_llenado) + 
     theme_light() +
     ggtitle(titulo) + 
     ylab("Número de individuos") +
