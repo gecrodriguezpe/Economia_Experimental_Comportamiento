@@ -35,7 +35,8 @@ histograma = function(df, titulo, lottery_mean, x_lab, bin_width, x_var, fill_va
     geom_histogram(aes(fill = {{fill_var}}), binwidth = bin_width, color = "black") +
     geom_text(aes(label = scales::percent(..prop..)), 
               position = position_dodge(width = 1), 
-              stat = "count", vjust = -0.8, check_overlap = TRUE) +
+              stat = "count", vjust = -0.8, 
+              check_overlap = TRUE) +
     geom_vline(xintercept = lottery_mean, color = "black") +
     theme_light() +
     ggtitle(titulo) + 
@@ -282,8 +283,15 @@ conteo_violax_IIA = violax_IIA_punto5 %>%
 
 # 5. Punto 6 ----
 
+# Definiciones de diccionarios: 
+
+
+# Diccionario para x definido como el pago en caso de extracción favorable para lo lotería de la izquierda tarea 2
+dict_extrax_favorable = dict("1" = 4000, "2" = 3600, "3" = 3200, "4" = 2800, "5" = 2400, "6" = 2000, 
+                                   "7" = 1600, "8" = 1200, "9" = 800, "10" = 400, "11" = 0, convert = TRUE)
+  
 # Función que genera un histograma que contiene el equivalente de certeza y su actitud frente al riesgo para cada individuo
-punto6 = function(tabla, mult_switch, begin_D, violax_IIA){
+punto6 = function(tabla, mult_switch, begin_D, violax_IIA, dyct){
   # Utilizo la función inner_join para unir los data frames
   first = inner_join(tabla, mult_switch, by = "iid")
   todas = inner_join(first, begin_D, by = "iid")
@@ -295,8 +303,7 @@ punto6 = function(tabla, mult_switch, begin_D, violax_IIA){
   df = filtrada[-1] 
   # Creo un diccionario de python para almacenar los diferentes valores 
   # del pago en caso de extracción favorable para la loteria de la izquierda
-  equi_dict = dict("1" = 1000, "2" = 900, "3" = 800, "4" = 700, "5" = 600, "6" = 500,
-                   "7" = 400, "8" = 300, "9" = 200, "10" = 100, "11" = 0, convert = TRUE)
+  equi_dict = dyct
   # vector que me almancena la actitud al riesgo de cada uno de los individuos
   risk_actitude = c()
   # vector que me almacena el equivalente de certeza de cada uno de los individuos
@@ -333,7 +340,8 @@ punto6 = function(tabla, mult_switch, begin_D, violax_IIA){
   return(resultados)
 }
 
-punto_6 = punto6(tabla_2, mult_switch_4, first_D_4, violax_IIA_punto5)
+punto_6 = punto6(tabla_2, mult_switch_4, 
+                 first_D_4, violax_IIA_punto5, dict_extrax_favorable)
 
 # Clasificación respecto al pago esperado de la lotería de la izquierda
 conteo_punto6 = punto_6 %>% 
@@ -341,23 +349,35 @@ conteo_punto6 = punto_6 %>%
 
 # Histograma de los pagos de las loterias de la izquierda en caso de extracción favorable
 x11()
-hist_punto6 = histograma2(punto_6, "Distribución de pagos (x) para lo lotería de la izquierda",
-                         lottery_mean2, "Pagos esperados para lo lotería de la izquierda", 
-                         100, pago_esperado2, "green1"); hist_punto6
+hist_punto6 = histograma2(punto_6, "Distribución de pagos (x) en caso de extracción favorable para\n lo lotería de la izquierda",
+                         lottery_mean, "Pagos esperados para lo lotería de la izquierda", 
+                         400, pago_esperado2, "green1"); hist_punto6
 
 # 6. Punto 7 ----
 
-# Genero la base de datos que contiene la diferencia entre el pago esperado
-# de la loteria de la izquierda da la tabla 2 y el equivalente de certeza
-# de la tabla 1
-punto_7 = punto_3 %>%
-  inner_join(punto_6) %>% 
-  mutate(diferencia = pago_esperado2 - equi_certeza) %>% 
-  relocate(pago_esperado2, .before = equi_certeza) %>% 
-  relocate(diferencia, .after = equi_certeza)
+# 6.1 Usando x como pago esperado de la lotería de la izquierda tarea 2 ----
 
-# Histograma de la diferencia entre los pagos x y el certezo equivalente de cada individuo 
+# Genero la base de datos que contiene la diferencia entre el pago en caso de extracción favorable
+# de la loteria de la izquierda da la tabla 2 y el equivalente de certeza de la tabla 1
+punto7 = function(df1, df2){
+  df = df1 %>% 
+    inner_join(df2) %>% 
+    mutate(diferencia = pago_esperado2 - equi_certeza) %>% 
+    relocate(pago_esperado2, .before = equi_certeza) %>% 
+    relocate(diferencia, .after = equi_certeza)
+  return(df)
+}
+
+punto_7 = punto7(punto_3, punto_6)
+
+punto_7_final = punto_7 %>% 
+  mutate(comportamiento = ifelse(diferencia == 0, "Satisface IIA",
+         "No satisface IIA"))
+
 x11()
-hist_punto7 = histograma(punto_7, "Distribución de la diferencia de los de pagos (x) con el certero equivalente",
-                          0, "Diferencia de los pagos (x) con el certero equivalente", 
-                          100, diferencia, risk_actitude); hist_punto7
+hist_punto7_escalado = histograma(punto_7_final, 
+                                  "Distribución de la diferencia de los de pagos (x) en caso de extracción favorable \n con el certero equivalente",
+                                  0, "Diferencia de los de pagos (x) en caso de extracción favorable \n con el certero equivalente", 
+                                  400, diferencia, comportamiento); hist_punto7_escalado
+
+
